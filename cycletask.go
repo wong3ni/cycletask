@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
@@ -23,7 +25,7 @@ func HandleInput(ctx context.Context, cancel context.CancelFunc) {
 		fmt.Scanln(&cmd, &tag, &req_url, &des_url)
 		switch cmd {
 		case "add":
-			cycletask := NewCycleTask(req_url, des_url)
+			cycletask := NewCycleTask(req_url, des_url, tag, 2)
 			cycletaskmap[tag] = cycletask
 			fmt.Println("OK!")
 		case "start":
@@ -37,11 +39,11 @@ func HandleInput(ctx context.Context, cancel context.CancelFunc) {
 			delete(cycletaskmap, tag)
 			fmt.Println("OK!")
 		case "view":
-			for k := range cycletaskmap {
-				fmt.Println("tag:", k, " req_url:", cycletaskmap[k].Req_url)
+			for k, v := range cycletaskmap {
+				fmt.Println("tag:", k, " req_url:", v.Req_url, " des_url:", v.Des_url)
 			}
 		case "help":
-			fmt.Println("Example: add|del tag url")
+			fmt.Println("Example: add|del tag rurl durl")
 		case "quit":
 			cancel()
 			for k := range cycletaskmap {
@@ -69,12 +71,13 @@ type CycleTask struct {
 	Stop_signal chan bool
 }
 
-func NewCycleTask(r string, d string) (c *CycleTask) {
+func NewCycleTask(r string, d string, tag string, t int) (c *CycleTask) {
 	c = new(CycleTask)
 	c.Stop_signal = make(chan bool)
 	c.Req_url = r
 	c.Des_url = d
-	c.TimeInterval = 2
+	c.Tag = tag
+	c.TimeInterval = t
 	c.Ticker = time.NewTicker(time.Second * time.Duration(c.TimeInterval))
 	return
 }
@@ -114,20 +117,51 @@ func (c *CycleTask) StartCycle(ctx context.Context) {
 }
 
 func LoadConfig() {
+	cycletaskmap = make(map[string]*CycleTask)
 
+	filename := "config.json"
+	var ct []CycleTaskInfo
+
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		fmt.Println("没有发现config.json文件!")
+		return
+	}
+	err = json.Unmarshal(data, &ct)
+	if err != nil {
+		fmt.Println("解析config.json文件失败!")
+		return
+	}
+	for _, v := range ct {
+		cycletask := NewCycleTask(v.Req_url, v.Des_url, v.Tag, v.TimeInterval)
+		cycletaskmap[v.Tag] = cycletask
+	}
 }
 
 func SaveConfig() {
-	for tag := range cycletaskmap {
-		fmt.Println("tag:", tag, " req_url:", cycletaskmap[tag].Req_url)
+	var infolist []CycleTaskInfo
+	for _, v := range cycletaskmap {
+		var info CycleTaskInfo
+		info.Des_url = v.Des_url
+		info.Req_url = v.Req_url
+		info.Tag = v.Tag
+		info.TimeInterval = v.TimeInterval
+		infolist = append(infolist, info)
+	}
+	data, err := json.Marshal(infolist)
+	if err != nil {
+		fmt.Println("编码成json文件出错!")
+	}
+	err = ioutil.WriteFile("config.json", data, 0666)
+	if err != nil {
+		fmt.Println("保存config.json文件出错!")
 	}
 }
 
 func main() {
 	// c := make(chan os.Signal, 1)
 	// signal.Notify(c, os.Interrupt, os.Kill)
-	cycletaskmap = make(map[string]*CycleTask)
-
+	LoadConfig()
 	ctx, cancel := context.WithCancel(context.Background())
 	wg.Add(1)
 	go HandleInput(ctx, cancel)
