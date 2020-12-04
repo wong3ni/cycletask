@@ -62,7 +62,11 @@ func (c *CycleTaskUnit) StartCycle() {
 				}
 				// data, _ := ioutil.ReadAll(res.Body)
 				// body := bytes.NewReader(data)
-				res_res, err := http.Post(c.Des_url, "multipart/form-data", req_res.Body)
+				req, err := http.NewRequest("POST", c.Des_url, req_res.Body)
+				req.Header.Set("contentType", "multipart/form-data")
+				res_res, err := http.DefaultClient.Do(req)
+
+				// res_res, err := http.Post(c.Des_url, "multipart/form-data", req_res.Body)
 				if res_res != nil {
 					log.Println("Tag:", c.Tag, " => ", res_res, c.Des_url)
 				} else {
@@ -125,23 +129,34 @@ func (c *CycleTask) AddTaskUnit(req_url, des_url, tag string, timeinterval int) 
 }
 
 func (c *CycleTask) StartTaskUnit(tag string) Code {
-	cyctu, _ := c.GetTaskUnit(tag)
-	cyctu.StartCycle()
-	cyctu.State = true
-	return 0
+	cyctu, ok := c.GetTaskUnit(tag)
+	if ok {
+		cyctu.StartCycle()
+		cyctu.State = true
+		return 0
+	}
+	return 1
 }
 
 func (c *CycleTask) StopTaskUnit(tag string) Code {
-	cyctu, _ := c.GetTaskUnit(tag)
-	cyctu.StopCycle()
-	cyctu.State = false
-	return 0
+	cyctu, ok := c.GetTaskUnit(tag)
+	if ok {
+		cyctu.StopCycle()
+		cyctu.State = false
+		return 0
+	}
+	return 1
 }
 
 func (c *CycleTask) DelTaskUnit(tag string) Code {
-	cyctu, _ := c.GetTaskUnit(tag)
-	cyctu.StopCycle()
-	cyctu.Wait()
-	c.Cycletaskmap.Delete(tag)
-	return 0
+	cyctu, ok := c.GetTaskUnit(tag)
+	if ok {
+		if cyctu.State {
+			cyctu.StopCycle()
+			cyctu.Wait()
+		}
+		c.Cycletaskmap.Delete(tag)
+		return 0
+	}
+	return 1
 }

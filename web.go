@@ -75,7 +75,7 @@ func ApiCycleTaskAdd(w http.ResponseWriter, r *http.Request) {
 		rurl := r.Form["rurl"][0]
 		durl := r.Form["durl"][0]
 		tag := r.Form["tag"][0]
-		t := r.Form["t"][0]
+		t := r.Form["time"][0]
 		ti, err := strconv.Atoi(t)
 		if err != nil || ti <= 0 {
 			ti = 2
