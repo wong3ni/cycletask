@@ -72,7 +72,7 @@ func (c *CycleTaskUnit) StartCycle() {
 
 				// res_res, err := http.Post(c.Des_url, "multipart/form-data", req_res.Body)
 				if res_res != nil {
-					log.Println("Tag:", c.Tag, " => ", res_res, c.Des_url)
+					log.Println("Tag:", c.Tag, " => ", res_res.Status, c.Des_url)
 				} else {
 					log.Println("Tag:", c.Tag, " => ", "unreachable", c.Des_url)
 				}
@@ -120,7 +120,10 @@ func (c *CycleTask) Stop() {
 
 func (c *CycleTask) GetTaskUnit(tag string) (*CycleTaskUnit, bool) {
 	cyctu, ok := c.Cycletaskmap.Load(tag)
-	return cyctu.(*CycleTaskUnit), ok
+	if cyctu != nil {
+		return cyctu.(*CycleTaskUnit), ok
+	}
+	return nil, false
 }
 
 func (c *CycleTask) AddTaskUnit(req_url, des_url, tag string, timeinterval int, direction int) Code {
