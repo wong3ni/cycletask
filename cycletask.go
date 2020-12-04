@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -13,6 +14,7 @@ type CycleTaskUnitInfo struct {
 	Des_url      string `json:"durl"`
 	TimeInterval int    `json:"time"`
 	State        bool   `json:"state"`
+	Direction    int    `json:"direction"`
 }
 
 type CycleTaskUnit struct {
@@ -28,7 +30,7 @@ type CycleTask struct {
 
 var CyT *CycleTask
 
-func NewCycleTaskUnit(r string, d string, tag string, t int) (c *CycleTaskUnit) {
+func NewCycleTaskUnit(r string, d string, tag string, t int, dire int) (c *CycleTaskUnit) {
 	c = new(CycleTaskUnit)
 	c.stop_signal = make(chan bool)
 	c.Req_url = r
@@ -36,6 +38,7 @@ func NewCycleTaskUnit(r string, d string, tag string, t int) (c *CycleTaskUnit) 
 	c.Tag = tag
 	c.TimeInterval = t
 	c.State = false
+	c.Direction = dire
 	// c.Ticker = time.NewTicker(time.Second * time.Duration(c.TimeInterval))
 	return
 }
@@ -64,6 +67,7 @@ func (c *CycleTaskUnit) StartCycle() {
 				// body := bytes.NewReader(data)
 				req, err := http.NewRequest("POST", c.Des_url, req_res.Body)
 				req.Header.Set("contentType", "multipart/form-data")
+				req.Header.Set("direction", strconv.Itoa(c.Direction))
 				res_res, err := http.DefaultClient.Do(req)
 
 				// res_res, err := http.Post(c.Des_url, "multipart/form-data", req_res.Body)
@@ -88,7 +92,7 @@ func (c *CycleTaskUnit) StartCycle() {
 
 func (c *CycleTask) Load() {
 	for _, v := range cfg.CycleTaskUnitInfos {
-		cyctu := NewCycleTaskUnit(v.Req_url, v.Des_url, v.Tag, v.TimeInterval)
+		cyctu := NewCycleTaskUnit(v.Req_url, v.Des_url, v.Tag, v.TimeInterval, v.Direction)
 		c.Cycletaskmap.Store(v.Tag, cyctu)
 	}
 }
@@ -119,8 +123,8 @@ func (c *CycleTask) GetTaskUnit(tag string) (*CycleTaskUnit, bool) {
 	return cyctu.(*CycleTaskUnit), ok
 }
 
-func (c *CycleTask) AddTaskUnit(req_url, des_url, tag string, timeinterval int) Code {
-	cyctu := NewCycleTaskUnit(req_url, des_url, tag, timeinterval)
+func (c *CycleTask) AddTaskUnit(req_url, des_url, tag string, timeinterval int, direction int) Code {
+	cyctu := NewCycleTaskUnit(req_url, des_url, tag, timeinterval, direction)
 	_, ok := c.Cycletaskmap.LoadOrStore(tag, cyctu)
 	if ok {
 		return 1

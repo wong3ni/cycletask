@@ -43,6 +43,8 @@ func MiddleLog(next http.Handler) http.Handler {
 func (h *HTTPServer) StartHTTPServer() {
 	h.srv = &http.Server{Addr: cfg.ListenAddr}
 
+	http.Handle("/static/", MiddleLog(http.StripPrefix("/static/", http.FileServer(http.Dir("dist/static")))))
+
 	http.Handle("/", MiddleLog(http.HandlerFunc(index)))
 	http.Handle("/api/add", MiddleLog(http.HandlerFunc(ApiCycleTaskAdd)))
 	http.Handle("/api/start", MiddleLog(http.HandlerFunc(ApiCycleTaskStart)))
@@ -76,11 +78,13 @@ func ApiCycleTaskAdd(w http.ResponseWriter, r *http.Request) {
 		durl := r.Form["durl"][0]
 		tag := r.Form["tag"][0]
 		t := r.Form["time"][0]
+		d := r.Form["direction"][0]
 		ti, err := strconv.Atoi(t)
 		if err != nil || ti <= 0 {
 			ti = 2
 		}
-		res.Cod = CyT.AddTaskUnit(rurl, durl, tag, ti)
+		di, _ := strconv.Atoi(d)
+		res.Cod = CyT.AddTaskUnit(rurl, durl, tag, ti, di)
 		res.Msg = "success"
 		resjson, _ := json.Marshal(res)
 		w.Write(resjson)
