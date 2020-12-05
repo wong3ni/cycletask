@@ -15,9 +15,8 @@ type CycleTaskUnitInfo struct {
 	TimeInterval int    `json:"time"`
 	State        bool   `json:"state"`
 	Direction    int    `json:"direction"`
-	Name		 string  `json:"name"`
-	Id   	     string  `json:id`
-
+	Name         string `json:"name"`
+	Id           string `json:"id"`
 }
 
 type CycleTaskUnit struct {
@@ -133,7 +132,7 @@ func (c *CycleTask) GetTaskUnit(tag string) (*CycleTaskUnit, bool) {
 	return nil, false
 }
 
-func (c *CycleTask) AddTaskUnit(req_url, des_url, tag string, timeinterval , direction int, name string, id string) Code {
+func (c *CycleTask) AddTaskUnit(req_url, des_url, tag string, timeinterval, direction int, name string, id string) Code {
 	cyctu := NewCycleTaskUnit(req_url, des_url, tag, timeinterval, direction, name, id)
 	_, ok := c.Cycletaskmap.LoadOrStore(tag, cyctu)
 	if ok {
@@ -174,3 +173,14 @@ func (c *CycleTask) DelTaskUnit(tag string) Code {
 	}
 	return 1
 }
+
+// func SendMonibucaInvite(id, channel string) bool {
+// 	u := fmt.Sprintf("http://219.138.126.226:18298/gb28181/invite?id=%s&channel=%s", id, channel)
+// 	res, _ := http.Get(u)
+// 	if res != nil {
+// 		if res.StatusCode == 200 {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
