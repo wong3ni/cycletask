@@ -79,12 +79,14 @@ func ApiCycleTaskAdd(w http.ResponseWriter, r *http.Request) {
 		tag := r.Form["tag"][0]
 		t := r.Form["time"][0]
 		d := r.Form["direction"][0]
+		n := r.Form["name"][0]
+		id := r.Form["id"][0]
 		ti, err := strconv.Atoi(t)
 		if err != nil || ti <= 0 {
 			ti = 2
 		}
 		di, _ := strconv.Atoi(d)
-		res.Cod = CyT.AddTaskUnit(rurl, durl, tag, ti, di)
+		res.Cod = CyT.AddTaskUnit(rurl, durl, tag, ti, di, n, id)
 		res.Msg = "success"
 		resjson, _ := json.Marshal(res)
 		w.Write(resjson)
