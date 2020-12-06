@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"log"
+	"sort"
 	"strconv"
 
 	"net/http"
@@ -146,6 +147,9 @@ func ApiCycleTaskList(w http.ResponseWriter, r *http.Request) {
 			cyctu := v.(*CycleTaskUnit)
 			list = append(list, cyctu.CycleTaskUnitInfo)
 			return true
+		})
+		sort.Slice(list, func(i, j int) bool {
+			return list[i].Tag < list[j].Tag
 		})
 
 		ticker := time.NewTicker(time.Second * 5)
