@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"html/template"
 	"log"
+	"strconv"
 
 	"net/http"
-	"strconv"
 	"time"
 
 	"sync"
@@ -74,20 +74,25 @@ func ApiCycleTaskAdd(w http.ResponseWriter, r *http.Request) {
 	res := NewRes()
 	if r.Method == "GET" {
 		r.ParseForm()
-		rurl := r.Form["rurl"][0]
-		durl := r.Form["durl"][0]
-		tag := r.Form["tag"][0]
-		t := r.Form["time"][0]
-		d := r.Form["direction"][0]
-		n := r.Form["name"][0]
-		id := r.Form["id"][0]
+		var cyctuinfo CycleTaskUnitInfo
+		cyctuinfo.Req_url = r.Form.Get("rurl")
+		cyctuinfo.Des_url = r.Form.Get("durl")
+		cyctuinfo.Tag = r.Form.Get("tag")
+		cyctuinfo.Direction = r.Form.Get("direction")
+		cyctuinfo.Name = r.Form.Get("name")
+		cyctuinfo.Id = r.Form.Get("id")
+		t := r.Form.Get("time")
 		ti, err := strconv.Atoi(t)
 		if err != nil || ti <= 0 {
 			ti = 2
 		}
-		di, _ := strconv.Atoi(d)
-		res.Cod = CyT.AddTaskUnit(rurl, durl, tag, ti, di, n, id)
-		res.Msg = "success"
+		cyctuinfo.TimeInterval = ti
+		res.Cod = CyT.AddTaskUnit(cyctuinfo)
+		if res.Cod == 0 {
+			res.Msg = "success"
+		} else {
+			res.Msg = "error"
+		}
 		resjson, _ := json.Marshal(res)
 		w.Write(resjson)
 	}

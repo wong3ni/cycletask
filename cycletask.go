@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -14,7 +13,7 @@ type CycleTaskUnitInfo struct {
 	Des_url      string `json:"durl"`
 	TimeInterval int    `json:"time"`
 	State        bool   `json:"state"`
-	Direction    int    `json:"direction"`
+	Direction    string `json:"direction"`
 	Name         string `json:"name"`
 	Id           string `json:"id"`
 }
@@ -32,18 +31,10 @@ type CycleTask struct {
 
 var CyT *CycleTask
 
-func NewCycleTaskUnit(r string, d string, tag string, t int, dire int, name string, id string) (c *CycleTaskUnit) {
+func NewCycleTaskUnit(cyctuinfo CycleTaskUnitInfo) (c *CycleTaskUnit) {
 	c = new(CycleTaskUnit)
 	c.stop_signal = make(chan bool)
-	c.Req_url = r
-	c.Des_url = d
-	c.Tag = tag
-	c.TimeInterval = t
-	c.State = false
-	c.Direction = dire
-	c.Name = name
-	c.Id = id
-	// c.Ticker = time.NewTicker(time.Second * time.Duration(c.TimeInterval))
+	c.CycleTaskUnitInfo = cyctuinfo
 	return
 }
 
@@ -71,7 +62,7 @@ func (c *CycleTaskUnit) StartCycle() {
 				// body := bytes.NewReader(data)
 				req, err := http.NewRequest("POST", c.Des_url, req_res.Body)
 				req.Header.Set("contentType", "multipart/form-data")
-				req.Header.Set("direction", strconv.Itoa(c.Direction))
+				req.Header.Set("direction", c.Direction)
 				req.Header.Set("name", c.Name)
 				req.Header.Set("id", c.Id)
 				res_res, err := http.DefaultClient.Do(req)
@@ -98,7 +89,7 @@ func (c *CycleTaskUnit) StartCycle() {
 
 func (c *CycleTask) Load() {
 	for _, v := range cfg.CycleTaskUnitInfos {
-		cyctu := NewCycleTaskUnit(v.Req_url, v.Des_url, v.Tag, v.TimeInterval, v.Direction, v.Name, v.Id)
+		cyctu := NewCycleTaskUnit(v)
 		c.Cycletaskmap.Store(v.Tag, cyctu)
 	}
 }
@@ -132,9 +123,9 @@ func (c *CycleTask) GetTaskUnit(tag string) (*CycleTaskUnit, bool) {
 	return nil, false
 }
 
-func (c *CycleTask) AddTaskUnit(req_url, des_url, tag string, timeinterval, direction int, name string, id string) Code {
-	cyctu := NewCycleTaskUnit(req_url, des_url, tag, timeinterval, direction, name, id)
-	_, ok := c.Cycletaskmap.LoadOrStore(tag, cyctu)
+func (c *CycleTask) AddTaskUnit(cyctuinfo CycleTaskUnitInfo) Code {
+	cyctu := NewCycleTaskUnit(cyctuinfo)
+	_, ok := c.Cycletaskmap.LoadOrStore(cyctuinfo.Tag, cyctu)
 	if ok {
 		return 1
 	}
