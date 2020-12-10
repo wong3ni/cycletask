@@ -75,6 +75,7 @@ func (c *CycleTaskUnit) StartCycle() {
 				req.Header.Set("direction", c.Direction)
 				req.Header.Set("name", c.Name)
 				req.Header.Set("id", c.Id)
+				req.Header.Set("tag", c.Tag)
 				res_res, err := http.DefaultClient.Do(req)
 
 				// res_res, err := http.Post(c.Des_url, "multipart/form-data", req_res.Body)
