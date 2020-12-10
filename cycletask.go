@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -59,16 +61,16 @@ func (c *CycleTaskUnit) StartCycle() {
 				if err != nil {
 					continue
 				}
-
-				if req_res.ContentLength < 15 {
+				data, _ := ioutil.ReadAll(req_res.Body)
+				if len(data) < 15 {
 					log.Println("Tag:", c.Tag, " <= ", "no such stream")
 					// 	r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
 					// 	http.Get(r_s)
 					// 	log.Println(r_s)
 					continue
 				}
-				// body := bytes.NewReader(data)
-				req, err := http.NewRequest("POST", c.Des_url, req_res.Body)
+				body := bytes.NewReader(data)
+				req, err := http.NewRequest("POST", c.Des_url, body)
 				req.Header.Set("contentType", "multipart/form-data")
 				req.Header.Set("direction", c.Direction)
 				req.Header.Set("name", c.Name)
