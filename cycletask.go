@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -16,6 +17,7 @@ type CycleTaskUnitInfo struct {
 	Direction    string `json:"direction"`
 	Name         string `json:"name"`
 	Id           string `json:"id"`
+	NVRID        string `json:"nvrid"`
 }
 
 type CycleTaskUnit struct {
@@ -58,7 +60,14 @@ func (c *CycleTaskUnit) StartCycle() {
 				if err != nil {
 					continue
 				}
-				// data, _ := ioutil.ReadAll(res.Body)
+				data, _ := ioutil.ReadAll(req_res.Body)
+				if len(data) < 15 {
+					log.Println("Tag:", c.Tag, " <= ", "no such stream")
+					// 	r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
+					// 	http.Get(r_s)
+					// 	log.Println(r_s)
+					continue
+				}
 				// body := bytes.NewReader(data)
 				req, err := http.NewRequest("POST", c.Des_url, req_res.Body)
 				req.Header.Set("contentType", "multipart/form-data")

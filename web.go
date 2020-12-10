@@ -82,6 +82,7 @@ func ApiCycleTaskAdd(w http.ResponseWriter, r *http.Request) {
 		cyctuinfo.Direction = r.Form.Get("direction")
 		cyctuinfo.Name = r.Form.Get("name")
 		cyctuinfo.Id = r.Form.Get("id")
+		cyctuinfo.NVRID = r.Form.Get("nvrid")
 		t := r.Form.Get("time")
 		ti, err := strconv.Atoi(t)
 		if err != nil || ti <= 0 {
