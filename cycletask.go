@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -64,9 +65,16 @@ func (c *CycleTaskUnit) StartCycle() {
 				data, _ := ioutil.ReadAll(req_res.Body)
 				if len(data) < 15 {
 					log.Println("Tag:", c.Tag, " <= ", "no such stream")
-					// 	r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
-					// 	http.Get(r_s)
-					// 	log.Println(r_s)
+					if c.NVRID != "" {
+						r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
+						r_r, e := http.Get(r_s)
+						if e != nil {
+							log.Fatalln(e)
+						}
+						if r_r.StatusCode == 200 {
+							log.Println(r_s)
+						}
+					}
 					continue
 				}
 				body := bytes.NewReader(data)
