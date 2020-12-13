@@ -71,8 +71,12 @@ func (c *CycleTaskUnit) StartCycle() {
 						if e != nil {
 							log.Fatalln(e)
 						}
-						if r_r.StatusCode == 200 {
-							log.Println(r_s)
+						if r_r != nil {
+							if r_r.StatusCode == 200 {
+								log.Println(r_s)
+							}
+						} else {
+							log.Fatalln("r_r is nil")
 						}
 					}
 					continue
