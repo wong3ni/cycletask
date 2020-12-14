@@ -53,53 +53,54 @@ func (c *CycleTaskUnit) StartCycle() {
 		for {
 			select {
 			case <-c.Ticker.C:
-				req_res, err := http.Get(c.Req_url)
-				if req_res != nil {
-					log.Println("Tag:", c.Tag, " <= ", req_res.Status, c.Req_url)
-				} else {
-					log.Println("Tag:", c.Tag, " <= ", "unreachable", c.Req_url)
-				}
+				req, err := http.NewRequest("GET", c.Req_url, nil)
+				req.Close = true
+				req_res, err := http.DefaultClient.Do(req)
+				defer req_res.Body.Close()
 				if err != nil {
+					log.Println(err)
 					continue
 				}
+				if req_res != nil {
+					log.Println("Tag:", c.Tag, " <= ", req_res.Status, c.Req_url)
+				}
+
 				data, _ := ioutil.ReadAll(req_res.Body)
 				if len(data) < 15 {
 					log.Println("Tag:", c.Tag, " <= ", "no such stream")
 					if c.NVRID != "" {
 						r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
-						r_r, e := http.Get(r_s)
-						if e != nil {
-							log.Fatalln(e)
+						req, err = http.NewRequest("GET", r_s, nil)
+						req.Close = true
+						r_r, err := http.DefaultClient.Do(req)
+						if err != nil {
+							log.Println(err)
+							continue
 						}
 						if r_r != nil {
-							if r_r.StatusCode == 200 {
-								log.Println(r_s)
-							}
-						} else {
-							log.Fatalln("r_r is nil")
+							log.Println(r_r.StatusCode, r_s)
 						}
 					}
 					continue
 				}
 				body := bytes.NewReader(data)
-				req, err := http.NewRequest("POST", c.Des_url, body)
+				req, err = http.NewRequest("POST", c.Des_url, body)
+				req.Close = true
 				req.Header.Set("contentType", "multipart/form-data")
 				req.Header.Set("direction", c.Direction)
 				req.Header.Set("name", c.Name)
 				req.Header.Set("id", c.Id)
 				req.Header.Set("tag", c.Tag)
 				res_res, err := http.DefaultClient.Do(req)
-
+				if err != nil {
+					log.Println(err)
+					continue
+				}
 				// res_res, err := http.Post(c.Des_url, "multipart/form-data", req_res.Body)
 				if res_res != nil {
 					log.Println("Tag:", c.Tag, " => ", res_res.Status, c.Des_url)
-				} else {
-					log.Println("Tag:", c.Tag, " => ", "unreachable", c.Des_url)
 				}
-				defer req_res.Body.Close()
-				if err != nil {
-					continue
-				}
+
 			case <-c.stop_signal:
 				c.Ticker.Stop()
 				c.Ticker = nil
