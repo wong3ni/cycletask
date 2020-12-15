@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"html/template"
 	"log"
+	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 
@@ -21,6 +23,8 @@ type HTTPServer struct {
 	sync.WaitGroup
 	srv *http.Server
 }
+
+var htsv *HTTPServer
 
 type Res struct {
 	Cod Code   `json:"Code"`
@@ -43,8 +47,9 @@ func MiddleLog(next http.Handler) http.Handler {
 
 func (h *HTTPServer) StartHTTPServer() {
 	h.srv = &http.Server{Addr: cfg.ListenAddr}
-
-	http.Handle("/static/", MiddleLog(http.StripPrefix("/static/", http.FileServer(http.Dir("dist/static")))))
+	abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	http.Handle("/static/", MiddleLog(http.StripPrefix("/static/",
+		http.FileServer(http.Dir(filepath.Join(abspath, "dist/static"))))))
 
 	http.Handle("/", MiddleLog(http.HandlerFunc(index)))
 	http.Handle("/api/add", MiddleLog(http.HandlerFunc(ApiCycleTaskAdd)))
@@ -66,7 +71,8 @@ func (h *HTTPServer) StartHTTPServer() {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles("dist/index.html")
+	abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	t, _ := template.ParseFiles(filepath.Join(abspath, "dist/index.html"))
 	t.Execute(w, nil)
 }
 
