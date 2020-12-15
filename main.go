@@ -13,18 +13,16 @@ type program struct {
 }
 
 func (p *program) Start(s service.Service) error {
-	cfg = new(Config)
-	cfg.Load()
-	if cfg.ListenAddr == "" {
-		cfg.Save()
-		fmt.Println("已生成空配置文件，请设置监听地址!")
-		return fmt.Errorf("init failed!")
-	}
 	go p.run()
 	return nil
 }
 
 func (p *program) run() error {
+	cfg = new(Config)
+	cfg.Load()
+	if cfg.ListenAddr == "" {
+		cfg.ListenAddr = ":22222"
+	}
 	logger = new(Logger)
 	logger.Load()
 	logger.Start()
