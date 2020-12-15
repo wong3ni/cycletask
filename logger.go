@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -21,7 +22,7 @@ type Logger struct {
 
 func (l *Logger) GetFileName() string {
 	now := time.Now()
-	return now.Format("2006-01-02 15:04:05") + ".txt"
+	return fmt.Sprintf("%d-%d-%d %d-%d-%d", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()) + ".txt"
 }
 
 func (l *Logger) Start() {
