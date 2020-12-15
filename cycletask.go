@@ -22,97 +22,11 @@ type CycleTaskUnitInfo struct {
 	NVRID        string `json:"nvrid"`
 }
 
-type CycleTaskUnit struct {
-	sync.WaitGroup
-	CycleTaskUnitInfo
-	Ticker      *time.Ticker
-	stop_signal chan bool
-}
-
 type CycleTask struct {
 	Cycletaskmap sync.Map
 }
 
 var CyT *CycleTask
-
-func NewCycleTaskUnit(cyctuinfo CycleTaskUnitInfo) (c *CycleTaskUnit) {
-	c = new(CycleTaskUnit)
-	c.stop_signal = make(chan bool)
-	c.CycleTaskUnitInfo = cyctuinfo
-	return
-}
-
-func (c *CycleTaskUnit) StopCycle() {
-	c.stop_signal <- true
-}
-
-func (c *CycleTaskUnit) StartCycle() {
-	c.Ticker = time.NewTicker(time.Second * time.Duration(c.TimeInterval))
-	c.Add(1)
-	go func() {
-		for {
-			select {
-			case <-c.Ticker.C:
-				req, err := http.NewRequest("GET", c.Req_url, nil)
-				req.Close = true
-				req_res, err := http.DefaultClient.Do(req)
-				if err != nil {
-					log.Println("Tag", c.Tag, err)
-					continue
-				}
-				defer req_res.Body.Close()
-				// if req_res != nil {
-				// 	log.Println("Tag:", c.Tag, " <= ", req_res.Status, c.Req_url)
-				// }
-
-				data, _ := ioutil.ReadAll(req_res.Body)
-				if len(data) < 15 {
-					log.Println("Tag:", c.Tag, " <= ", "no such stream")
-					if c.NVRID != "" {
-						r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
-						req, err = http.NewRequest("GET", r_s, nil)
-						req.Close = true
-						r_r, err := http.DefaultClient.Do(req)
-						if err != nil {
-							log.Println("Tag", c.Tag, err)
-							continue
-						}
-						if r_r != nil {
-							log.Println(r_r.StatusCode, r_s)
-						}
-					}
-					continue
-				}
-				body := bytes.NewReader(data)
-				req, err = http.NewRequest("POST", c.Des_url, body)
-				req.Close = true
-				req.Header.Set("contentType", "multipart/form-data")
-				req.Header.Set("direction", c.Direction)
-				req.Header.Set("name", c.Name)
-				req.Header.Set("id", c.Id)
-				req.Header.Set("tag", c.Tag)
-				res_res, err := http.DefaultClient.Do(req)
-				if err != nil {
-					log.Println("Tag", c.Tag, err)
-					continue
-				}
-				if res_res == nil {
-					log.Println("Tag", c.Tag, "res_res is nil")
-				}
-				// res_res, err := http.Post(c.Des_url, "multipart/form-data", req_res.Body)
-				// if res_res != nil {
-				// 	log.Println("Tag:", c.Tag, " => ", res_res.Status, c.Des_url)
-				// }
-
-			case <-c.stop_signal:
-				c.Ticker.Stop()
-				c.Ticker = nil
-				c.Done()
-				return
-			}
-		}
-	}()
-}
 
 func (c *CycleTask) Load() {
 	for _, v := range cfg.CycleTaskUnitInfos {
@@ -135,7 +49,6 @@ func (c *CycleTask) Stop() {
 		cyctu := v.(*CycleTaskUnit)
 		if cyctu.State {
 			cyctu.StopCycle()
-			cyctu.State = false
 			cyctu.Wait()
 		}
 		return true
@@ -162,8 +75,7 @@ func (c *CycleTask) AddTaskUnit(cyctuinfo CycleTaskUnitInfo) Code {
 func (c *CycleTask) StartTaskUnit(tag string) Code {
 	cyctu, ok := c.GetTaskUnit(tag)
 	if ok {
-		cyctu.StartCycle()
-		cyctu.State = true
+		go cyctu.StartCycle()
 		return 0
 	}
 	return 1
@@ -173,7 +85,6 @@ func (c *CycleTask) StopTaskUnit(tag string) Code {
 	cyctu, ok := c.GetTaskUnit(tag)
 	if ok {
 		cyctu.StopCycle()
-		cyctu.State = false
 		return 0
 	}
 	return 1
@@ -192,13 +103,84 @@ func (c *CycleTask) DelTaskUnit(tag string) Code {
 	return 1
 }
 
-// func SendMonibucaInvite(id, channel string) bool {
-// 	u := fmt.Sprintf("http://219.138.126.226:18298/gb28181/invite?id=%s&channel=%s", id, channel)
-// 	res, _ := http.Get(u)
-// 	if res != nil {
-// 		if res.StatusCode == 200 {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+type CycleTaskUnit struct {
+	sync.WaitGroup
+	CycleTaskUnitInfo
+	Ticker      *time.Ticker
+	stop_signal chan bool
+}
+
+func NewCycleTaskUnit(cyctuinfo CycleTaskUnitInfo) (c *CycleTaskUnit) {
+	c = new(CycleTaskUnit)
+	c.stop_signal = make(chan bool)
+	c.CycleTaskUnitInfo = cyctuinfo
+	return
+}
+
+func (c *CycleTaskUnit) StopCycle() {
+	close(c.stop_signal)
+}
+
+func (c *CycleTaskUnit) StartCycle() {
+	c.Ticker = time.NewTicker(time.Second * time.Duration(c.TimeInterval))
+	c.Add(1)
+	c.State = true
+	for {
+		select {
+		case <-c.Ticker.C:
+			c.Forward()
+		case <-c.stop_signal:
+			c.Ticker.Stop()
+			c.Ticker = nil
+			c.State = false
+			c.Done()
+			return
+		}
+	}
+}
+
+func (c *CycleTaskUnit) Forward() {
+	req, err := http.NewRequest("GET", c.Req_url, nil)
+	req.Close = true
+	req_res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println("Tag", c.Tag, err)
+		return
+	}
+	defer req_res.Body.Close()
+
+	data, _ := ioutil.ReadAll(req_res.Body)
+	if len(data) < 15 {
+		log.Println("Tag:", c.Tag, " <= ", "no such stream")
+		if c.NVRID != "" {
+			r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
+			req, err = http.NewRequest("GET", r_s, nil)
+			req.Close = true
+			r_r, err := http.DefaultClient.Do(req)
+			if err != nil {
+				log.Println("Tag", c.Tag, err)
+				return
+			}
+			if r_r != nil {
+				log.Println(r_r.StatusCode, r_s)
+			}
+		}
+		return
+	}
+	body := bytes.NewReader(data)
+	req, err = http.NewRequest("POST", c.Des_url, body)
+	req.Close = true
+	req.Header.Set("contentType", "multipart/form-data")
+	req.Header.Set("direction", c.Direction)
+	req.Header.Set("name", c.Name)
+	req.Header.Set("id", c.Id)
+	req.Header.Set("tag", c.Tag)
+	res_res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println("Tag", c.Tag, err)
+		return
+	}
+	if res_res == nil {
+		log.Println("Tag", c.Tag, "res_res is nil")
+	}
+}
