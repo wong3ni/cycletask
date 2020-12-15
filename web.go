@@ -64,7 +64,6 @@ func (h *HTTPServer) StartHTTPServer() {
 	go func() {
 		defer h.Done()
 		if err := h.srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalln("检测监听地址是否有误!")
 			log.Fatalln(err)
 		}
 	}()
