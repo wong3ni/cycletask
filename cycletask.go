@@ -118,7 +118,7 @@ func NewCycleTaskUnit(cyctuinfo CycleTaskUnitInfo) (c *CycleTaskUnit) {
 }
 
 func (c *CycleTaskUnit) StopCycle() {
-	close(c.stop_signal)
+	c.stop_signal <- true
 }
 
 func (c *CycleTaskUnit) StartCycle() {
@@ -128,7 +128,7 @@ func (c *CycleTaskUnit) StartCycle() {
 	for {
 		select {
 		case <-c.Ticker.C:
-			c.Forward()
+			go c.Forward()
 		case <-c.stop_signal:
 			c.Ticker.Stop()
 			c.Ticker = nil
