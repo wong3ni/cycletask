@@ -56,11 +56,11 @@ func (c *CycleTaskUnit) StartCycle() {
 				req, err := http.NewRequest("GET", c.Req_url, nil)
 				req.Close = true
 				req_res, err := http.DefaultClient.Do(req)
-				defer req_res.Body.Close()
 				if err != nil {
 					log.Println("Tag", c.Tag, err)
 					continue
 				}
+				defer req_res.Body.Close()
 				// if req_res != nil {
 				// 	log.Println("Tag:", c.Tag, " <= ", req_res.Status, c.Req_url)
 				// }
