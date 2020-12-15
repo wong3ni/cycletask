@@ -23,6 +23,9 @@ func (p *program) run() error {
 	if cfg.ListenAddr == "" {
 		cfg.ListenAddr = ":22222"
 	}
+	if cfg.Path == "" {
+		cfg.Path = "logs"
+	}
 	logger = new(Logger)
 	logger.Load()
 	logger.Start()
