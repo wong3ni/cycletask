@@ -9,11 +9,15 @@ import (
 type Code int
 
 func main() {
-	KillSignal := make(chan os.Signal, 1)
-	signal.Notify(KillSignal, os.Interrupt, os.Kill)
-
 	cfg = new(Config)
 	cfg.Load()
+
+	logger = new(Logger)
+	logger.Load()
+	logger.Start()
+
+	KillSignal := make(chan os.Signal, 1)
+	signal.Notify(KillSignal, os.Interrupt, os.Kill)
 
 	CyT = new(CycleTask)
 	CyT.Load()
@@ -27,6 +31,7 @@ func main() {
 	http.srv.Close()
 	// http.srv.Shutdown(context.TODO())
 	http.Wait()
+	logger.Close()
 	cfg.Save()
 	log.Println("Thanks!")
 }

@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	WebConfig          `json:"web"`
+	LoggerInfo         `json:"log"`
 	CycleTaskUnitInfos []CycleTaskUnitInfo `json:"cycletasks"`
 }
 

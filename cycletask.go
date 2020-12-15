@@ -58,12 +58,12 @@ func (c *CycleTaskUnit) StartCycle() {
 				req_res, err := http.DefaultClient.Do(req)
 				defer req_res.Body.Close()
 				if err != nil {
-					log.Println(err)
+					log.Println("Tag", c.Tag, err)
 					continue
 				}
-				if req_res != nil {
-					log.Println("Tag:", c.Tag, " <= ", req_res.Status, c.Req_url)
-				}
+				// if req_res != nil {
+				// 	log.Println("Tag:", c.Tag, " <= ", req_res.Status, c.Req_url)
+				// }
 
 				data, _ := ioutil.ReadAll(req_res.Body)
 				if len(data) < 15 {
@@ -74,7 +74,7 @@ func (c *CycleTaskUnit) StartCycle() {
 						req.Close = true
 						r_r, err := http.DefaultClient.Do(req)
 						if err != nil {
-							log.Println(err)
+							log.Println("Tag", c.Tag, err)
 							continue
 						}
 						if r_r != nil {
@@ -93,13 +93,16 @@ func (c *CycleTaskUnit) StartCycle() {
 				req.Header.Set("tag", c.Tag)
 				res_res, err := http.DefaultClient.Do(req)
 				if err != nil {
-					log.Println(err)
+					log.Println("Tag", c.Tag, err)
 					continue
 				}
-				// res_res, err := http.Post(c.Des_url, "multipart/form-data", req_res.Body)
-				if res_res != nil {
-					log.Println("Tag:", c.Tag, " => ", res_res.Status, c.Des_url)
+				if res_res == nil {
+					log.Println("Tag", c.Tag, "res_res is nil")
 				}
+				// res_res, err := http.Post(c.Des_url, "multipart/form-data", req_res.Body)
+				// if res_res != nil {
+				// 	log.Println("Tag:", c.Tag, " => ", res_res.Status, c.Des_url)
+				// }
 
 			case <-c.stop_signal:
 				c.Ticker.Stop()
