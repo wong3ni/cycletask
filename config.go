@@ -21,7 +21,6 @@ func (c *Config) Load() {
 	d, err := ioutil.ReadFile(filepath.Join(abspath, "config.json"))
 	if err != nil {
 		fmt.Println("没有发现config.json文件!")
-		return
 	}
 	err = json.Unmarshal(d, c)
 	if err != nil {
