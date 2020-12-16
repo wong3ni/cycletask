@@ -180,7 +180,5 @@ func (c *CycleTaskUnit) Forward() {
 		log.Println("Tag", c.Tag, err)
 		return
 	}
-	if res_res == nil {
-		log.Println("Tag", c.Tag, "res_res is nil")
-	}
+	defer res_res.Body.Close()
 }
