@@ -50,7 +50,7 @@ func main() {
 	svcConfig := &service.Config{
 		Name:        "cycletask",
 		DisplayName: "cycletask",
-		Description: "cycletask demo",
+		Description: "cycletask daemon",
 	}
 	prg := &program{}
 	s, err := service.New(prg, svcConfig)
