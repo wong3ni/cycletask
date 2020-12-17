@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"html/template"
 	"log"
-	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -47,9 +46,9 @@ func MiddleLog(next http.Handler) http.Handler {
 
 func (h *HTTPServer) StartHTTPServer() {
 	h.srv = &http.Server{Addr: cfg.ListenAddr}
-	abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	// abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	http.Handle("/static/", MiddleLog(http.StripPrefix("/static/",
-		http.FileServer(http.Dir(filepath.Join(abspath, "dist/static"))))))
+		http.FileServer(http.Dir(filepath.Join(ResPath, "dist/static"))))))
 
 	http.Handle("/", MiddleLog(http.HandlerFunc(index)))
 	http.Handle("/api/add", MiddleLog(http.HandlerFunc(ApiCycleTaskAdd)))
@@ -70,8 +69,8 @@ func (h *HTTPServer) StartHTTPServer() {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-	t, _ := template.ParseFiles(filepath.Join(abspath, "dist/index.html"))
+	// abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	t, _ := template.ParseFiles(filepath.Join(ResPath, "dist/index.html"))
 	t.Execute(w, nil)
 }
 
