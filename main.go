@@ -1,37 +1,86 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
-	"os/signal"
+
+	"github.com/kardianos/service"
 )
 
 type Code int
 
-func main() {
+type program struct {
+}
+
+func (p *program) Start(s service.Service) error {
+	go p.run()
+	return nil
+}
+
+func (p *program) run() error {
 	cfg = new(Config)
 	cfg.Load()
-
+	if cfg.ListenAddr == "" {
+		cfg.ListenAddr = ":22222"
+	}
+	if cfg.Path == "" {
+		cfg.Path = "logs"
+	}
 	logger = new(Logger)
 	logger.Load()
 	logger.Start()
-
-	KillSignal := make(chan os.Signal, 1)
-	signal.Notify(KillSignal, os.Interrupt, os.Kill)
-
 	CyT = new(CycleTask)
 	CyT.Load()
+	htsv = new(HTTPServer)
+	htsv.StartHTTPServer()
+	return nil
+}
 
-	http := new(HTTPServer)
-	http.StartHTTPServer()
-
-	<-KillSignal
+func (p *program) Stop(s service.Service) error {
 	CyT.Stop()
 	CyT.Save()
-	http.srv.Close()
-	// http.srv.Shutdown(context.TODO())
-	http.Wait()
+	htsv.srv.Close()
+	// htsv.Wait()
 	logger.Close()
 	cfg.Save()
-	log.Println("Thanks!")
+	return nil
+}
+
+func main() {
+	svcConfig := &service.Config{
+		Name:        "cycletask",
+		DisplayName: "cycletask",
+		Description: "cycletask daemon",
+	}
+	prg := &program{}
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if len(os.Args) > 1 {
+		if os.Args[1] == "install" {
+			err = s.Install()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		} else if os.Args[1] == "uninstall" {
+			err = s.Uninstall()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		} else if os.Args[1] == "stop" {
+			err = s.Stop()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		}
+	}
+
+	err = s.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
 }

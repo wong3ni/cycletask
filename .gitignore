@@ -5,3 +5,4 @@ output/
 *_test.go
 /cycletask
 /logs
+/main
