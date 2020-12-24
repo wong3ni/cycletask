@@ -32,11 +32,15 @@ func (p *program) run() error {
 	}
 	if cfg.Path == "" {
 		cfg.Path = "logs"
+		cfg.MaxLines = 100000
 	}
 	logger = new(Logger)
 	logger.Load()
 	if service.Interactive() == false {
+		logger.Println = logger.ToFile
 		logger.Start()
+	} else {
+		logger.Println = logger.ToShow
 	}
 	CyT = new(CycleTask)
 	CyT.Load()

@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -144,25 +143,25 @@ func (c *CycleTaskUnit) Forward() {
 	req.Close = true
 	req_res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Println("Tag", c.Tag, err)
+		logger.Println("Tag", c.Tag, err)
 		return
 	}
 	defer req_res.Body.Close()
 
 	data, _ := ioutil.ReadAll(req_res.Body)
 	if len(data) < 15 {
-		log.Println("Tag:", c.Tag, " <= ", "no such stream")
+		logger.Println("Tag:", c.Tag, " <= ", "no such stream")
 		if c.NVRID != "" {
 			r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
 			req, err = http.NewRequest("GET", r_s, nil)
 			req.Close = true
 			r_r, err := http.DefaultClient.Do(req)
 			if err != nil {
-				log.Println("Tag", c.Tag, err)
+				logger.Println("Tag", c.Tag, err)
 				return
 			}
 			if r_r != nil {
-				log.Println(r_r.StatusCode, r_s)
+				logger.Println(r_r.StatusCode, r_s)
 			}
 		}
 		return
@@ -177,7 +176,7 @@ func (c *CycleTaskUnit) Forward() {
 	req.Header.Set("tag", c.Tag)
 	res_res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Println("Tag", c.Tag, err)
+		logger.Println("Tag", c.Tag, err)
 		return
 	}
 	defer res_res.Body.Close()

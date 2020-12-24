@@ -39,7 +39,7 @@ func NewRes() *Res {
 
 func MiddleLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RemoteAddr, r.Method, r.RequestURI)
+		logger.Println(r.RemoteAddr, r.Method, r.RequestURI)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -144,7 +144,7 @@ func ApiCycleTaskDel(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiCycleTaskList(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.RemoteAddr, "Start EventSource", r.RequestURI)
+	logger.Println(r.RemoteAddr, "Start EventSource", r.RequestURI)
 	sse := NewSSE(w, r.Context())
 	for {
 		var list []CycleTaskUnitInfo
@@ -167,7 +167,7 @@ func ApiCycleTaskList(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case <-r.Context().Done():
-			log.Println(r.RemoteAddr, "Close EventSource", r.RequestURI)
+			logger.Println(r.RemoteAddr, "Close EventSource", r.RequestURI)
 			return
 		}
 	}

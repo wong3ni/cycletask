@@ -10,12 +10,15 @@ import (
 )
 
 type LoggerInfo struct {
-	Path string `json:"path"`
+	Path     string `json:"path"`
+	MaxLines int    `json:"maxlines"`
 }
 
 type Logger struct {
 	LoggerInfo
-	fd *os.File
+	fd      *os.File
+	Count   int
+	Println func(v ...interface{})
 }
 
 func (l *Logger) GetFileName() string {
@@ -38,6 +41,20 @@ func (l *Logger) Close() {
 
 func (l *Logger) Load() {
 	l.LoggerInfo = cfg.LoggerInfo
+}
+
+func (l *Logger) ToFile(v ...interface{}) {
+	if l.Count >= l.MaxLines {
+		l.Close()
+		l.Start()
+		l.Count = 0
+	}
+	log.Println(v...)
+	l.Count++
+}
+
+func (l *Logger) ToShow(v ...interface{}) {
+	log.Println(v...)
 }
 
 var logger *Logger
