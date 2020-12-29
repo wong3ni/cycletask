@@ -32,7 +32,7 @@ func (p *program) run() error {
 	}
 	if cfg.Path == "" {
 		cfg.Path = "logs"
-		cfg.MaxLines = 100000
+		cfg.MaxLines = 30000
 	}
 	logger = new(Logger)
 	logger.Load()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -19,6 +20,7 @@ type CycleTaskUnitInfo struct {
 	Name         string `json:"name"`
 	Id           string `json:"id"`
 	NVRID        string `json:"nvrid"`
+	Channel      int    `json:"channel"`
 }
 
 type CycleTask struct {
@@ -152,7 +154,7 @@ func (c *CycleTaskUnit) Forward() {
 	if len(data) < 15 {
 		logger.Println("Tag:", c.Tag, " <= ", "no such stream")
 		if c.NVRID != "" {
-			r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
+			r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=" + fmt.Sprintf("%d", c.Channel)
 			req, err = http.NewRequest("GET", r_s, nil)
 			req.Close = true
 			r_r, err := http.DefaultClient.Do(req)
