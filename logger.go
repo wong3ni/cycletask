@@ -23,7 +23,7 @@ type Logger struct {
 
 func (l *Logger) GetFileName() string {
 	now := time.Now()
-	return fmt.Sprintf("%d-%d-%d %d-%d-%d", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()) + ".txt"
+	return fmt.Sprintf("%d-%02d-%02d %02d-%02d-%02d", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second()) + ".txt"
 }
 
 func (l *Logger) Start() {
