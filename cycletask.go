@@ -143,7 +143,8 @@ func (c *CycleTaskUnit) StartCycle() {
 func (c *CycleTaskUnit) Forward() {
 	req, err := http.NewRequest("GET", c.Req_url, nil)
 	req.Close = true
-	req_res, err := http.DefaultClient.Do(req)
+	myclient := http.Client{Timeout: 2 * time.Second}
+	req_res, err := myclient.Do(req)
 	if err != nil {
 		logger.Println("Tag", c.Tag, err)
 		return
@@ -152,12 +153,12 @@ func (c *CycleTaskUnit) Forward() {
 
 	data, _ := ioutil.ReadAll(req_res.Body)
 	if len(data) < 15 {
-		logger.Println("Tag:", c.Tag, " <= ", "no such stream")
+		// logger.Println("Tag:", c.Tag, " <= ", "no such stream")
 		if c.NVRID != "" {
 			r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=" + fmt.Sprintf("%d", c.Channel)
 			req, err = http.NewRequest("GET", r_s, nil)
 			req.Close = true
-			r_r, err := http.DefaultClient.Do(req)
+			r_r, err := myclient.Do(req)
 			if err != nil {
 				logger.Println("Tag", c.Tag, err)
 				return
@@ -176,7 +177,7 @@ func (c *CycleTaskUnit) Forward() {
 	req.Header.Set("name", c.Name)
 	req.Header.Set("id", c.Id)
 	req.Header.Set("tag", c.Tag)
-	res_res, err := http.DefaultClient.Do(req)
+	res_res, err := myclient.Do(req)
 	if err != nil {
 		logger.Println("Tag", c.Tag, err)
 		return
