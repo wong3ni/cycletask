@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -129,7 +128,7 @@ func (c *CycleTaskUnit) StartCycle() {
 	for {
 		select {
 		case <-c.Ticker.C:
-			go c.Forward()
+			go c.Deal()
 		case <-c.stop_signal:
 			c.Ticker.Stop()
 			c.Ticker = nil
@@ -140,7 +139,7 @@ func (c *CycleTaskUnit) StartCycle() {
 	}
 }
 
-func (c *CycleTaskUnit) Forward() {
+func (c *CycleTaskUnit) Deal() {
 	req, err := http.NewRequest("GET", c.Req_url, nil)
 	req.Close = true
 	myclient := http.Client{Timeout: 2 * time.Second}
@@ -169,18 +168,6 @@ func (c *CycleTaskUnit) Forward() {
 		}
 		return
 	}
-	body := bytes.NewReader(data)
-	req, err = http.NewRequest("POST", c.Des_url, body)
-	req.Close = true
-	req.Header.Set("contentType", "multipart/form-data")
-	req.Header.Set("direction", c.Direction)
-	req.Header.Set("name", c.Name)
-	req.Header.Set("id", c.Id)
-	req.Header.Set("tag", c.Tag)
-	res_res, err := myclient.Do(req)
-	if err != nil {
-		logger.Println("Tag", c.Tag, err)
-		return
-	}
-	defer res_res.Body.Close()
+	r := DealImage(data, c.Tag)
+	fmt.Println(r)
 }

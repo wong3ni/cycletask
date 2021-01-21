@@ -16,10 +16,18 @@ type program struct {
 }
 
 func (p *program) Start(s service.Service) error {
+	NewYolo()
+	SetWeights("/Users/wzh/model/yolov4_final.weights")
+	SetCfg("/Users/wzh/Python3/image_analysis/cfg/yolov4.cfg")
+	SetCategory("/Users/wzh/Python3/image_analysis/data/coco.names")
 	if service.Interactive() == false {
 		path, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 		ResPath = path
+	} else {
+		SetPrintLayers(1)
+		SetPrintDetectTime(1)
 	}
+	InitYoloNet()
 	go p.run()
 	return nil
 }

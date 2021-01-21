@@ -7,3 +7,4 @@ output/
 /logs
 /main
 *.exe
+*.dylib
