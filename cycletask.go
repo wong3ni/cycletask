@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -20,6 +20,7 @@ type CycleTaskUnitInfo struct {
 	Name         string `json:"name"`
 	Id           string `json:"id"`
 	NVRID        string `json:"nvrid"`
+	Channel      int    `json:"channel"`
 }
 
 type CycleTask struct {
@@ -142,27 +143,28 @@ func (c *CycleTaskUnit) StartCycle() {
 func (c *CycleTaskUnit) Forward() {
 	req, err := http.NewRequest("GET", c.Req_url, nil)
 	req.Close = true
-	req_res, err := http.DefaultClient.Do(req)
+	myclient := http.Client{Timeout: 2 * time.Second}
+	req_res, err := myclient.Do(req)
 	if err != nil {
-		log.Println("Tag", c.Tag, err)
+		logger.Println("Tag", c.Tag, err)
 		return
 	}
 	defer req_res.Body.Close()
 
 	data, _ := ioutil.ReadAll(req_res.Body)
 	if len(data) < 15 {
-		log.Println("Tag:", c.Tag, " <= ", "no such stream")
+		// logger.Println("Tag:", c.Tag, " <= ", "no such stream")
 		if c.NVRID != "" {
-			r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=0"
+			r_s := "http://" + strings.Split(c.Req_url, "/")[2] + "/gb28181/invite?id=" + c.NVRID + "&channel=" + fmt.Sprintf("%d", c.Channel)
 			req, err = http.NewRequest("GET", r_s, nil)
 			req.Close = true
-			r_r, err := http.DefaultClient.Do(req)
+			r_r, err := myclient.Do(req)
 			if err != nil {
-				log.Println("Tag", c.Tag, err)
+				logger.Println("Tag", c.Tag, err)
 				return
 			}
 			if r_r != nil {
-				log.Println(r_r.StatusCode, r_s)
+				logger.Println(r_r.StatusCode, r_s)
 			}
 		}
 		return
@@ -175,9 +177,9 @@ func (c *CycleTaskUnit) Forward() {
 	req.Header.Set("name", c.Name)
 	req.Header.Set("id", c.Id)
 	req.Header.Set("tag", c.Tag)
-	res_res, err := http.DefaultClient.Do(req)
+	res_res, err := myclient.Do(req)
 	if err != nil {
-		log.Println("Tag", c.Tag, err)
+		logger.Println("Tag", c.Tag, err)
 		return
 	}
 	defer res_res.Body.Close()

@@ -3,16 +3,23 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/kardianos/service"
 )
 
 type Code int
 
+var ResPath string
+
 type program struct {
 }
 
 func (p *program) Start(s service.Service) error {
+	if service.Interactive() == false {
+		path, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+		ResPath = path
+	}
 	go p.run()
 	return nil
 }
@@ -25,10 +32,16 @@ func (p *program) run() error {
 	}
 	if cfg.Path == "" {
 		cfg.Path = "logs"
+		cfg.MaxLines = 30000
 	}
 	logger = new(Logger)
 	logger.Load()
-	logger.Start()
+	if service.Interactive() == false {
+		logger.Println = logger.ToFile
+		logger.Start()
+	} else {
+		logger.Println = logger.ToShow
+	}
 	CyT = new(CycleTask)
 	CyT.Load()
 	htsv = new(HTTPServer)
@@ -76,6 +89,11 @@ func main() {
 				fmt.Println(err)
 			}
 			return
+		} else if os.Args[1] == "start" {
+			err = s.Start()
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 

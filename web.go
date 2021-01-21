@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"html/template"
 	"log"
-	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -40,16 +39,16 @@ func NewRes() *Res {
 
 func MiddleLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RemoteAddr, r.Method, r.RequestURI)
+		logger.Println(r.RemoteAddr, r.Method, r.RequestURI)
 		next.ServeHTTP(w, r)
 	})
 }
 
 func (h *HTTPServer) StartHTTPServer() {
 	h.srv = &http.Server{Addr: cfg.ListenAddr}
-	abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	// abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	http.Handle("/static/", MiddleLog(http.StripPrefix("/static/",
-		http.FileServer(http.Dir(filepath.Join(abspath, "dist/static"))))))
+		http.FileServer(http.Dir(filepath.Join(ResPath, "dist/static"))))))
 
 	http.Handle("/", MiddleLog(http.HandlerFunc(index)))
 	http.Handle("/api/add", MiddleLog(http.HandlerFunc(ApiCycleTaskAdd)))
@@ -70,8 +69,8 @@ func (h *HTTPServer) StartHTTPServer() {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-	t, _ := template.ParseFiles(filepath.Join(abspath, "dist/index.html"))
+	// abspath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	t, _ := template.ParseFiles(filepath.Join(ResPath, "dist/index.html"))
 	t.Execute(w, nil)
 }
 
@@ -145,7 +144,7 @@ func ApiCycleTaskDel(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiCycleTaskList(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.RemoteAddr, "Start EventSource", r.RequestURI)
+	logger.Println(r.RemoteAddr, "Start EventSource", r.RequestURI)
 	sse := NewSSE(w, r.Context())
 	for {
 		var list []CycleTaskUnitInfo
@@ -168,7 +167,7 @@ func ApiCycleTaskList(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case <-r.Context().Done():
-			log.Println(r.RemoteAddr, "Close EventSource", r.RequestURI)
+			logger.Println(r.RemoteAddr, "Close EventSource", r.RequestURI)
 			return
 		}
 	}
