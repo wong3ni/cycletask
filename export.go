@@ -2,7 +2,7 @@ package main
 
 /*
 #cgo CXXFLAGS: -std=c++11
-#cgo LDFLAGS: -L ./ -lboatcount
+#cgo LDFLAGS: -L ./ -lshipcount
 #cgo CXXFLAGS: -I ./
 
 void newYolo();
@@ -20,6 +20,12 @@ void setPrintDetectTime(int);
 unsigned char deal(unsigned char *, const char *);
 */
 import "C"
+
+type YoloConfig struct {
+	Weights  string `json:"weights"`
+	Cfg      string `json:"cfg"`
+	Category string `json:"category"`
+}
 
 func NewYolo() {
 	C.newYolo()

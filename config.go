@@ -10,6 +10,7 @@ import (
 type Config struct {
 	WebConfig          `json:"web"`
 	LoggerInfo         `json:"log"`
+	YoloConfig         `json:"yolo"`
 	CycleTaskUnitInfos []CycleTaskUnitInfo `json:"cycletasks"`
 }
 
